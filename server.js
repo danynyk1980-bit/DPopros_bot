@@ -23,20 +23,19 @@ setInterval(() => {
   console.log('✅ Keep-alive:', new Date().toLocaleString('ru-RU'));
 }, 10 * 60 * 1000);
 
-// Команда /start - ТОЛЬКО КНОПКА
+// Команда /start - сразу показываем кнопку "Начать"
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
   
-  const initialMessage = `👋 *Добро пожаловать!*`;
+  const startMessage = `👋 *Добро пожаловать!*`;
 
-  // Сбрасываем предыдущие ответы пользователя
-  userResponses[chatId] = { step: 'initial' };
+  userResponses[chatId] = { step: 'start' };
 
-  bot.sendMessage(chatId, initialMessage, {
+  bot.sendMessage(chatId, startMessage, {
     parse_mode: 'Markdown',
     reply_markup: {
       inline_keyboard: [
-        [{ text: '🚀 Начать', callback_data: 'show_welcome' }]
+        [{ text: '🚀 Начать', callback_data: 'show_thanks' }]
       ]
     }
   });
@@ -48,14 +47,14 @@ bot.on('callback_query', (callbackQuery) => {
   const chatId = msg.chat.id;
   const data = callbackQuery.data;
 
-  if (data === 'show_welcome') {
-    // Показываем приветствие с благодарностью
-    showWelcomeMessage(chatId, msg.message_id);
+  if (data === 'show_thanks') {
+    // Показываем благодарность и выбор действия
+    showThanksMessage(chatId, msg.message_id);
   } else if (data === 'start_survey') {
     // Выбор мероприятия
     showEventSelection(chatId, msg.message_id);
-  } else if (data === 'another_event') {
-    // Выбор мероприятия
+  } else if (data === 'rate_another') {
+    // Оценить другое мероприятие
     showEventSelection(chatId, msg.message_id);
   } else if (data.startsWith('event_')) {
     const eventKey = data.replace('event_', '');
@@ -65,23 +64,26 @@ bot.on('callback_query', (callbackQuery) => {
     askQuestion1(chatId, msg.message_id);
   } else if (data.startsWith('rating_')) {
     handleRatingAnswer(callbackQuery);
+  } else if (data === 'back_to_thanks') {
+    // Назад к благодарности
+    showThanksMessage(chatId, msg.message_id);
   }
 });
 
-// Показ приветственного сообщения с благодарностью
-function showWelcomeMessage(chatId, messageId) {
-  const welcomeText = `🙏 *Спасибо за посещение мероприятия "Делового Петербурга"!*\n\nНам очень важна ваша обратная связь для улучшения наших событий.\n\nПожалуйста, пройдите небольшой опрос. Он полностью *анонимный* и займет не более 2-3 минут.`;
+// Показ сообщения с благодарностью и выбором действия
+function showThanksMessage(chatId, messageId) {
+  const thanksText = `🙏 *Спасибо за посещение мероприятия "Делового Петербурга"!*\n\nНам очень важна ваша обратная связь для улучшения наших событий.\n\nПожалуйста, пройдите небольшой опрос. Он полностью анонимный и займет не более 2-3 минут.`;
 
-  userResponses[chatId] = { step: 'welcome' };
+  userResponses[chatId] = { step: 'thanks' };
 
-  bot.editMessageText(welcomeText, {
+  bot.editMessageText(thanksText, {
     chat_id: chatId,
     message_id: messageId,
     parse_mode: 'Markdown',
     reply_markup: {
       inline_keyboard: [
-        [{ text: '🚀 Посмотреть все мероприятия "Делового Петербурга"', url: 'https://adv.dp.ru/events?utm_source=botopros&utm_medium=cpc&utm_campaign=botopros' }],
-        [{ text: '📝 Оценить мероприятие', callback_data: 'start_survey' }]
+        [{ text: '📝 Оценить мероприятие', callback_data: 'start_survey' }],
+        [{ text: '🚀 Посмотреть все мероприятия "Делового Петербурга"', url: 'https://adv.dp.ru/events?utm_source=botopros&utm_medium=cpc&utm_campaign=botopros' }]
       ]
     }
   });
@@ -94,7 +96,7 @@ function showEventSelection(chatId, messageId) {
   });
 
   // Добавляем кнопку "Назад"
-  eventButtons.push([{ text: '⬅️ Назад', callback_data: 'back_to_welcome' }]);
+  eventButtons.push([{ text: '⬅️ Назад', callback_data: 'back_to_thanks' }]);
 
   bot.editMessageText(
     `📅 *О каком мероприятии вы хотите оставить отзыв?*\n\nВыберите из списка:`,
@@ -106,32 +108,6 @@ function showEventSelection(chatId, messageId) {
     }
   );
 }
-
-// Обработка кнопки "Назад"
-bot.on('callback_query', (callbackQuery) => {
-  const msg = callbackQuery.message;
-  const chatId = msg.chat.id;
-  const data = callbackQuery.data;
-
-  if (data === 'back_to_welcome') {
-    // Возвращаемся к приветственному сообщению
-    showWelcomeMessage(chatId, msg.message_id);
-  } else if (data === 'back_to_start') {
-    // Возвращаемся к самому началу
-    const initialMessage = `👋 *Добро пожаловать!*`;
-
-    bot.editMessageText(initialMessage, {
-      chat_id: chatId,
-      message_id: msg.message_id,
-      parse_mode: 'Markdown',
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: '🚀 Начать', callback_data: 'show_welcome' }]
-        ]
-      }
-    });
-  }
-});
 
 // Вопрос 1: Полезность информации
 function askQuestion1(chatId, messageId) {
@@ -214,17 +190,29 @@ bot.on('callback_query', (callbackQuery) => {
       // Отправляем результаты
       sendResultsToAdmin(chatId, user);
       
-      // Благодарим пользователя
-      bot.sendMessage(chatId,
-        `✅ *Спасибо за ваши ответы!*\n\nВаше мнение очень важно для нас и поможет сделать наши мероприятия еще лучше!\n\nЖдем вас на следующих событиях "Делового Петербурга"! 🎉`,
-        { parse_mode: 'Markdown' }
-      );
+      // Благодарим пользователя и показываем финальные кнопки
+      showFinalThanks(chatId);
       
       // Очищаем данные пользователя
       delete userResponses[chatId];
     }
   }
 });
+
+// Финальное сообщение с благодарностью и кнопками
+function showFinalThanks(chatId) {
+  const finalText = `✅ *Спасибо за ваши ответы!*\n\nВаше мнение очень важно для нас и поможет сделать наши мероприятия еще лучше!\n\nЖдем вас на следующих событиях "Делового Петербурга"! 🎉`;
+
+  bot.sendMessage(chatId, finalText, {
+    parse_mode: 'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '📝 Оценить другое мероприятие', callback_data: 'rate_another' }],
+        [{ text: '🚀 Посмотреть все мероприятия "Делового Петербурга"', url: 'https://adv.dp.ru/events?utm_source=botopros&utm_medium=cpc&utm_campaign=botopros' }]
+      ]
+    }
+  });
+}
 
 // Обработка навигации назад
 bot.on('callback_query', (callbackQuery) => {
@@ -278,11 +266,8 @@ bot.on('message', (msg) => {
     // Отправляем результаты
     sendResultsToAdmin(chatId, user);
     
-    // Благодарим пользователя
-    bot.sendMessage(chatId,
-      `✅ *Спасибо за ваши ответы!*\n\nВаше мнение очень важно для нас и поможет сделать наши мероприятия еще лучше!\n\nЖдем вас на следующих событиях "Делового Петербурга"! 🎉`,
-      { parse_mode: 'Markdown' }
-    );
+    // Благодарим пользователя и показываем финальные кнопки
+    showFinalThanks(chatId);
     
     // Очищаем данные пользователя
     delete userResponses[chatId];
