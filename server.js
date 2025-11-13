@@ -36,7 +36,8 @@ bot.onText(/\/start/, (msg) => {
     parse_mode: 'Markdown',
     reply_markup: {
       inline_keyboard: [
-        [{ text: '🚀 Начать опрос', callback_data: 'start_survey' }]
+        [{ text: '🚀 Начать опрос', callback_data: 'start_survey' }],
+        [{ text: '📝 Оценить другое мероприятие', callback_data: 'another_event' }]
       ]
     }
   });
@@ -48,7 +49,7 @@ bot.on('callback_query', (callbackQuery) => {
   const chatId = msg.chat.id;
   const data = callbackQuery.data;
 
-  if (data === 'start_survey') {
+  if (data === 'start_survey' || data === 'another_event') {
     // Выбор мероприятия
     showEventSelection(chatId, msg.message_id);
   } else if (data.startsWith('event_')) {
@@ -68,6 +69,9 @@ function showEventSelection(chatId, messageId) {
     return [{ text: name, callback_data: `event_${key}` }];
   });
 
+  // Добавляем кнопку "Назад"
+  eventButtons.push([{ text: '⬅️ Назад', callback_data: 'back_to_start' }]);
+
   bot.editMessageText(
     `📅 *О каком мероприятии вы хотите оставить отзыв?*\n\nВыберите из списка:`,
     {
@@ -79,6 +83,30 @@ function showEventSelection(chatId, messageId) {
   );
 }
 
+// Обработка кнопки "Назад"
+bot.on('callback_query', (callbackQuery) => {
+  const msg = callbackQuery.message;
+  const chatId = msg.chat.id;
+  const data = callbackQuery.data;
+
+  if (data === 'back_to_start') {
+    // Возвращаемся к начальному сообщению
+    const welcomeText = `🙏 *Спасибо за посещение мероприятия "Делового Петербурга"!*\n\nНам очень важна ваша обратная связь для улучшения наших событий.\n\nПожалуйста, пройдите небольшой опрос. Он полностью *анонимный* и займет не более 2-3 минут.`;
+
+    bot.editMessageText(welcomeText, {
+      chat_id: chatId,
+      message_id: msg.message_id,
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '🚀 Начать опрос', callback_data: 'start_survey' }],
+          [{ text: '📝 Оценить другое мероприятие', callback_data: 'another_event' }]
+        ]
+      }
+    });
+  }
+});
+
 // Вопрос 1: Полезность информации
 function askQuestion1(chatId, messageId) {
   const ratingButtons = [];
@@ -87,6 +115,9 @@ function askQuestion1(chatId, messageId) {
       { text: `${i}`, callback_data: `rating_1_${i}` }
     ]);
   }
+
+  // Добавляем кнопку "Назад"
+  ratingButtons.push([{ text: '⬅️ Назад к выбору мероприятия', callback_data: 'back_to_events' }]);
 
   bot.editMessageText(
     `1/3 📊 *Оцените, насколько была полезной для вас информация на мероприятии?*\n\n*0* - ничего полезного\n*10* - максимально прикладная`,
@@ -108,6 +139,9 @@ function askQuestion2(chatId, messageId) {
     ]);
   }
 
+  // Добавляем кнопку "Назад"
+  ratingButtons.push([{ text: '⬅️ Назад', callback_data: 'back_to_question_1' }]);
+
   bot.editMessageText(
     `2/3 🔄 *Посетите ли вы повторно подобное мероприятие, если мы будем проводить его через 3-4 месяца?*\n\n*0* - точно не пойду\n*10* - обязательно пойду`,
     {
@@ -127,12 +161,63 @@ function askQuestion3(chatId, messageId) {
       chat_id: chatId,
       message_id: messageId,
       parse_mode: 'Markdown',
-      reply_markup: { inline_keyboard: [] }
+      reply_markup: { 
+        inline_keyboard: [
+          [{ text: '⬅️ Назад', callback_data: 'back_to_question_2' }],
+          [{ text: '⏭️ Пропустить вопрос', callback_data: 'skip_question_3' }]
+        ]
+      }
     }
   );
   
   userResponses[chatId].step = 'question_3';
 }
+
+// Обработка кнопки "Пропустить вопрос"
+bot.on('callback_query', (callbackQuery) => {
+  const msg = callbackQuery.message;
+  const chatId = msg.chat.id;
+  const data = callbackQuery.data;
+
+  if (data === 'skip_question_3') {
+    const user = userResponses[chatId];
+    if (user && user.step === 'question_3') {
+      user.suggestions = 'Пропущено';
+      user.step = 'completed';
+      
+      // Отправляем результаты
+      sendResultsToAdmin(chatId, user);
+      
+      // Благодарим пользователя
+      bot.sendMessage(chatId,
+        `✅ *Спасибо за ваши ответы!*\n\nВаше мнение очень важно для нас и поможет сделать наши мероприятия еще лучше!\n\nЖдем вас на следующих событиях "Делового Петербурга"! 🎉`,
+        { parse_mode: 'Markdown' }
+      );
+      
+      // Очищаем данные пользователя
+      delete userResponses[chatId];
+    }
+  }
+});
+
+// Обработка навигации назад
+bot.on('callback_query', (callbackQuery) => {
+  const msg = callbackQuery.message;
+  const chatId = msg.chat.id;
+  const data = callbackQuery.data;
+  const user = userResponses[chatId];
+
+  if (data === 'back_to_events' && user) {
+    user.step = 'select_event';
+    showEventSelection(chatId, msg.message_id);
+  } else if (data === 'back_to_question_1' && user) {
+    user.step = 'question_1';
+    askQuestion1(chatId, msg.message_id);
+  } else if (data === 'back_to_question_2' && user) {
+    user.step = 'question_2';
+    askQuestion2(chatId, msg.message_id);
+  }
+});
 
 // Обработка рейтинговых ответов
 function handleRatingAnswer(callbackQuery) {
