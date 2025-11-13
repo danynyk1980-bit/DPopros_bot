@@ -27,7 +27,7 @@ setInterval(() => {
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
   
-  const initialMessage = `👋 *Добро пожаловать!*\n\nЭто бот для обратной связи о мероприятиях "Делового Петербурга".`;
+  const initialMessage = `👋 *Добро пожаловать!*`;
 
   // Сбрасываем предыдущие ответы пользователя
   userResponses[chatId] = { step: 'initial' };
@@ -36,7 +36,7 @@ bot.onText(/\/start/, (msg) => {
     parse_mode: 'Markdown',
     reply_markup: {
       inline_keyboard: [
-        [{ text: '🚀 Начать опрос', callback_data: 'show_welcome' }]
+        [{ text: '🚀 Начать', callback_data: 'show_welcome' }]
       ]
     }
   });
@@ -51,7 +51,10 @@ bot.on('callback_query', (callbackQuery) => {
   if (data === 'show_welcome') {
     // Показываем приветствие с благодарностью
     showWelcomeMessage(chatId, msg.message_id);
-  } else if (data === 'start_survey' || data === 'another_event') {
+  } else if (data === 'start_survey') {
+    // Выбор мероприятия
+    showEventSelection(chatId, msg.message_id);
+  } else if (data === 'another_event') {
     // Выбор мероприятия
     showEventSelection(chatId, msg.message_id);
   } else if (data.startsWith('event_')) {
@@ -69,7 +72,7 @@ bot.on('callback_query', (callbackQuery) => {
 function showWelcomeMessage(chatId, messageId) {
   const welcomeText = `🙏 *Спасибо за посещение мероприятия "Делового Петербурга"!*\n\nНам очень важна ваша обратная связь для улучшения наших событий.\n\nПожалуйста, пройдите небольшой опрос. Он полностью *анонимный* и займет не более 2-3 минут.`;
 
-  userResponses[chatId] = { step: 'select_event' };
+  userResponses[chatId] = { step: 'welcome' };
 
   bot.editMessageText(welcomeText, {
     chat_id: chatId,
@@ -77,8 +80,8 @@ function showWelcomeMessage(chatId, messageId) {
     parse_mode: 'Markdown',
     reply_markup: {
       inline_keyboard: [
-        [{ text: '🚀 Начать опрос', callback_data: 'start_survey' }],
-        [{ text: '📝 Оценить другое мероприятие', callback_data: 'another_event' }]
+        [{ text: '🚀 Посмотреть все мероприятия "Делового Петербурга"', url: 'https://adv.dp.ru/events?utm_source=botopros&utm_medium=cpc&utm_campaign=botopros' }],
+        [{ text: '📝 Оценить мероприятие', callback_data: 'start_survey' }]
       ]
     }
   });
@@ -115,7 +118,7 @@ bot.on('callback_query', (callbackQuery) => {
     showWelcomeMessage(chatId, msg.message_id);
   } else if (data === 'back_to_start') {
     // Возвращаемся к самому началу
-    const initialMessage = `👋 *Добро пожаловать!*\n\nЭто бот для обратной связи о мероприятиях "Делового Петербурга".`;
+    const initialMessage = `👋 *Добро пожаловать!*`;
 
     bot.editMessageText(initialMessage, {
       chat_id: chatId,
@@ -123,7 +126,7 @@ bot.on('callback_query', (callbackQuery) => {
       parse_mode: 'Markdown',
       reply_markup: {
         inline_keyboard: [
-          [{ text: '🚀 Начать опрос', callback_data: 'show_welcome' }]
+          [{ text: '🚀 Начать', callback_data: 'show_welcome' }]
         ]
       }
     });
