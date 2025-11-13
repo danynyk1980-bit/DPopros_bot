@@ -23,21 +23,20 @@ setInterval(() => {
   console.log('✅ Keep-alive:', new Date().toLocaleString('ru-RU'));
 }, 10 * 60 * 1000);
 
-// Команда /start
+// Команда /start - ТОЛЬКО КНОПКА
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
   
-  const welcomeText = `🙏 *Спасибо за посещение мероприятия "Делового Петербурга"!*\n\nНам очень важна ваша обратная связь для улучшения наших событий.\n\nПожалуйста, пройдите небольшой опрос. Он полностью *анонимный* и займет не более 2-3 минут.`;
+  const initialMessage = `👋 *Добро пожаловать!*\n\nЭто бот для обратной связи о мероприятиях "Делового Петербурга".`;
 
   // Сбрасываем предыдущие ответы пользователя
-  userResponses[chatId] = { step: 'select_event' };
+  userResponses[chatId] = { step: 'initial' };
 
-  bot.sendMessage(chatId, welcomeText, {
+  bot.sendMessage(chatId, initialMessage, {
     parse_mode: 'Markdown',
     reply_markup: {
       inline_keyboard: [
-        [{ text: '🚀 Начать опрос', callback_data: 'start_survey' }],
-        [{ text: '📝 Оценить другое мероприятие', callback_data: 'another_event' }]
+        [{ text: '🚀 Начать опрос', callback_data: 'show_welcome' }]
       ]
     }
   });
@@ -49,7 +48,10 @@ bot.on('callback_query', (callbackQuery) => {
   const chatId = msg.chat.id;
   const data = callbackQuery.data;
 
-  if (data === 'start_survey' || data === 'another_event') {
+  if (data === 'show_welcome') {
+    // Показываем приветствие с благодарностью
+    showWelcomeMessage(chatId, msg.message_id);
+  } else if (data === 'start_survey' || data === 'another_event') {
     // Выбор мероприятия
     showEventSelection(chatId, msg.message_id);
   } else if (data.startsWith('event_')) {
@@ -63,6 +65,25 @@ bot.on('callback_query', (callbackQuery) => {
   }
 });
 
+// Показ приветственного сообщения с благодарностью
+function showWelcomeMessage(chatId, messageId) {
+  const welcomeText = `🙏 *Спасибо за посещение мероприятия "Делового Петербурга"!*\n\nНам очень важна ваша обратная связь для улучшения наших событий.\n\nПожалуйста, пройдите небольшой опрос. Он полностью *анонимный* и займет не более 2-3 минут.`;
+
+  userResponses[chatId] = { step: 'select_event' };
+
+  bot.editMessageText(welcomeText, {
+    chat_id: chatId,
+    message_id: messageId,
+    parse_mode: 'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '🚀 Начать опрос', callback_data: 'start_survey' }],
+        [{ text: '📝 Оценить другое мероприятие', callback_data: 'another_event' }]
+      ]
+    }
+  });
+}
+
 // Показ выбора мероприятия
 function showEventSelection(chatId, messageId) {
   const eventButtons = Object.entries(events).map(([key, name]) => {
@@ -70,7 +91,7 @@ function showEventSelection(chatId, messageId) {
   });
 
   // Добавляем кнопку "Назад"
-  eventButtons.push([{ text: '⬅️ Назад', callback_data: 'back_to_start' }]);
+  eventButtons.push([{ text: '⬅️ Назад', callback_data: 'back_to_welcome' }]);
 
   bot.editMessageText(
     `📅 *О каком мероприятии вы хотите оставить отзыв?*\n\nВыберите из списка:`,
@@ -89,18 +110,20 @@ bot.on('callback_query', (callbackQuery) => {
   const chatId = msg.chat.id;
   const data = callbackQuery.data;
 
-  if (data === 'back_to_start') {
-    // Возвращаемся к начальному сообщению
-    const welcomeText = `🙏 *Спасибо за посещение мероприятия "Делового Петербурга"!*\n\nНам очень важна ваша обратная связь для улучшения наших событий.\n\nПожалуйста, пройдите небольшой опрос. Он полностью *анонимный* и займет не более 2-3 минут.`;
+  if (data === 'back_to_welcome') {
+    // Возвращаемся к приветственному сообщению
+    showWelcomeMessage(chatId, msg.message_id);
+  } else if (data === 'back_to_start') {
+    // Возвращаемся к самому началу
+    const initialMessage = `👋 *Добро пожаловать!*\n\nЭто бот для обратной связи о мероприятиях "Делового Петербурга".`;
 
-    bot.editMessageText(welcomeText, {
+    bot.editMessageText(initialMessage, {
       chat_id: chatId,
       message_id: msg.message_id,
       parse_mode: 'Markdown',
       reply_markup: {
         inline_keyboard: [
-          [{ text: '🚀 Начать опрос', callback_data: 'start_survey' }],
-          [{ text: '📝 Оценить другое мероприятие', callback_data: 'another_event' }]
+          [{ text: '🚀 Начать опрос', callback_data: 'show_welcome' }]
         ]
       }
     });
