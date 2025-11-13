@@ -20,8 +20,14 @@ let userResponses = {};
 
 // Автопинг чтобы Render не усыплял бота
 setInterval(() => {
-  console.log('✅ Keep-alive:', new Date().toLocaleString('ru-RU'));
-}, 10 * 60 * 1000);
+  const now = new Date().toLocaleString('ru-RU');
+  console.log(`✅ Keep-alive ping: ${now}`);
+  
+  // Самопинг для дополнительной активности
+  axios.get(process.env.RENDER_URL || 'https://dpopros-bot.onrender.com')
+    .then(() => console.log('✅ Self-ping successful'))
+    .catch(err => console.log('⚠️  Self-ping error:', err.message));
+}, 8 * 60 * 1000); // Каждые 8 минут
 
 // Команда /start - сразу показываем кнопку "Начать"
 bot.onText(/\/start/, (msg) => {
@@ -289,16 +295,14 @@ function sendResultsToAdmin(chatId, responses) {
 }
 
 // Веб-сервер
-app.use(express.json());
 app.get('/', (req, res) => {
   console.log('🏓 Ping received:', new Date().toLocaleString('ru-RU'));
-  res.send('📊 Survey Bot is running!');
+  res.send('Bot is running!');
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🚀 Survey Bot server started on port ${PORT}`);
-  bot.startPolling().then(() => {
-    console.log('✅ Bot polling started successfully');
-  });
+  console.log(`🚀 Server started on port ${PORT}`);
+  bot.startPolling();
+});
 });
