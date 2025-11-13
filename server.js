@@ -18,15 +18,9 @@ const events = {
 // Хранилище ответов (в памяти)
 let userResponses = {};
 
-// Автопинг чтобы Render не усыплял бота
+// 🔥 АВТОПИНГ - УПРОЩЕННАЯ ВЕРСИЯ 🔥
 setInterval(() => {
-  const now = new Date().toLocaleString('ru-RU');
-  console.log(`✅ Keep-alive ping: ${now}`);
-  
-  // Самопинг для дополнительной активности
-  axios.get(process.env.RENDER_URL || 'https://dpopros-bot.onrender.com')
-    .then(() => console.log('✅ Self-ping successful'))
-    .catch(err => console.log('⚠️  Self-ping error:', err.message));
+  console.log(`✅ Keep-alive: ${new Date().toLocaleString('ru-RU')}`);
 }, 8 * 60 * 1000); // Каждые 8 минут
 
 // Команда /start - сразу показываем кнопку "Начать"
@@ -164,7 +158,7 @@ function askQuestion2(chatId, messageId) {
 // Вопрос 3: Открытый вопрос
 function askQuestion3(chatId, messageId) {
   bot.editMessageText(
-    `3/3 💡 *Как вы считаете, какие вопросы/темы нужно осветить подробнее или дополнительно? Что в данном формате встреч можно улучшить?*\n\nНапишите ваш ответ текстом:`,
+    `3/3 💡 *Как вы считаете, какие вопросы/темы нужно осветить подробнее или дополнительно? Что в данном formatе встреч можно улучшить?*\n\nНапишите ваш ответ текстом:`,
     {
       chat_id: chatId,
       message_id: messageId,
@@ -297,12 +291,17 @@ function sendResultsToAdmin(chatId, responses) {
 // Веб-сервер
 app.get('/', (req, res) => {
   console.log('🏓 Ping received:', new Date().toLocaleString('ru-RU'));
-  res.send('Bot is running!');
+  res.send('📊 Survey Bot is running!');
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server started on port ${PORT}`);
-  bot.startPolling();
-});
+  
+  // Запускаем бота
+  bot.startPolling().then(() => {
+    console.log('✅ Bot polling started successfully');
+  }).catch(error => {
+    console.log('❌ Bot error:', error);
+  });
 });
