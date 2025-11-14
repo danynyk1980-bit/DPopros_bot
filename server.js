@@ -11,7 +11,7 @@ const bot = new TelegramBot(BOT_TOKEN);
 // База мероприятий (можно расширять)
 const events = {
   'pr_elka': '🎄 PR-Ёлка 2025',
-  'business_breakfast': '🍳 Деловой завтрак коммерческая недвижимость 13 ноября',
+  'business_breakfast': '🍳 ДЗ коммерческая недвижимость 13 ноября',
   'conference': '🏢 Юридический форум 20 ноября',
 };
 
@@ -112,7 +112,7 @@ function showEventSelection(chatId, messageId) {
 // Вопрос 1: Полезность информации
 function askQuestion1(chatId, messageId) {
   const ratingButtons = [];
-  for (let i = 0; i <= 10; i += 2) {
+  for (let i = 0; i <= 10; i += 1) {
     ratingButtons.push([
       { text: `${i}`, callback_data: `rating_1_${i}` }
     ]);
@@ -135,7 +135,7 @@ function askQuestion1(chatId, messageId) {
 // Вопрос 2: Вероятность повторного посещения
 function askQuestion2(chatId, messageId) {
   const ratingButtons = [];
-  for (let i = 0; i <= 10; i += 2) {
+  for (let i = 0; i <= 10; i += 1) {
     ratingButtons.push([
       { text: `${i}`, callback_data: `rating_2_${i}` }
     ]);
