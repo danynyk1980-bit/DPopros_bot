@@ -10,8 +10,7 @@ const bot = new TelegramBot(BOT_TOKEN);
 
 // База мероприятий (можно расширять)
 const events = {
-  'pr_elka': '🎄 PR-Ёлка 2025',
-  'conference': '🏢 Юридический форум 20 ноября',
+    'conference': 'Деловой завтрак "ИИ"',
 };
 
 // Хранилище ответов (в памяти)
