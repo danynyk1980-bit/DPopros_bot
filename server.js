@@ -277,11 +277,11 @@ bot.on('message', (msg) => {
 // Отправка результатов администратору
 function sendResultsToAdmin(chatId, responses) {
   const adminMessage = `📊 *НОВЫЙ ОТЗЫВ О МЕРОПРИЯТИИ*\n\n` +
-    `🎯 *Мероприятие:* ${responses.event}\n` +
-    `📈 *Полезность информации:* ${responses.usefulness}/10\n` +
-    `🔄 *Вероятность повторного посещения:* ${responses.repeat}/10\n` +
-    `💡 *Предложения:* ${responses.suggestions || 'Не указано'}\n` +
-    `⏰ *Время опроса:* ${new Date().toLocaleString('ru-RU')}`;
+    ` *Мероприятие:* ${responses.event}\n` +
+    ` *Полезность информации:* ${responses.usefulness}/10\n` +
+    ` *Вероятность повторного посещения:* ${responses.repeat}/10\n` +
+    ` *Предложения:* ${responses.suggestions || 'Не указано'}\n` +
+    ` *Время опроса:* ${new Date().toLocaleString('ru-RU')}`;
 
   bot.sendMessage(ADMIN_CHAT_ID, adminMessage, {
     parse_mode: 'Markdown'
