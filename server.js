@@ -10,6 +10,8 @@ const bot = new TelegramBot(BOT_TOKEN);
 
 // База мероприятий (можно расширять)
 const events = {
+    'conference': 'Форум МСБ',
+    'conference': 'Деловой завтрак "Налоги"',
     'conference': 'Деловой завтрак "ИИ"',
 };
 
