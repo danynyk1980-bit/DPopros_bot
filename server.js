@@ -8,11 +8,11 @@ const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID || '129488879';
 
 const bot = new TelegramBot(BOT_TOKEN);
 
-// База мероприятий (можно расширять)
+// База мероприятий (можно расширять но каждосму писать свой ключ - тот что слева)
 const events = {
-    'conference': 'Форум МСБ',
-    'conference': 'Деловой завтрак "Налоги"',
-    'conference': 'Деловой завтрак "ИИ"',
+    'forum_msb': 'Форум МСБ',
+    'breakfast_taxes': 'Деловой завтрак "Налоги"',
+    'breakfast_ai': 'Деловой завтрак "ИИ"',
 };
 
 // Хранилище ответов (в памяти)
